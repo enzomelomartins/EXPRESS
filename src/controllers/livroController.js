@@ -1,7 +1,8 @@
 import livro from '../models/Livro.js';
+import { autor } from '../models/Autor.js';
 
 class LivroController {
-
+    
     static async listaLivros(req, res) {
         try {
             const listaLivros = await livro.find({});
@@ -10,7 +11,7 @@ class LivroController {
             res.status(500).json({message: error.message});
         }
     };
-
+    
     static async listaLivroPorId(req, res) {
         try {
             const livroEncontrado = await livro.findById(req.params.id);
@@ -19,15 +20,18 @@ class LivroController {
             res.status(500).json({message: `${error.message} - livro não encontrado`});
         }
     };
-
-
-    static async cadastrarLivro (req, res) {
-        const novoLivro = new livro(req.body);
+    
+    
+    static async cadastrarLivros(req, res) {
+        const novoLivro = req.body;
         try {
-            await novoLivro.save();
-            res.status(201).json(novoLivro);
+            const autorEncontrado = await autor.findById(novoLivro.autor);
+            let autorId = autorEncontrado._id;
+            const livroCompleto = { ...novoLivro, autor: { ...autorEncontrado._doc} };
+            const livroCriado = await livro.create(livroCompleto);
+            res.status(201).json({ message: "Criado com sucesso", livro: livroCriado });
         } catch (error) {
-            res.status(400).json({message: `${error.message} - falha ao cadastrar livro` });
+            res.status(500).json({ message: `${error.message} - falha ao cadastrar livro` });
         }
     }
 
@@ -49,7 +53,16 @@ class LivroController {
         }
     };
 
-
+    static async listaLivrosPorEditor(req, res) {
+    
+        const editora = req.query.editora;
+        try {
+            const livrosPorEditora = await livro.find({editora: editora});
+            res.status(200).json(livrosPorEditora);
+        } catch (error) {
+            res.status(500).json({message: `${error.message} - falha na busca por editora`});
+        }
+    }
 };
 
 export default LivroController;
